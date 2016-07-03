@@ -3,7 +3,8 @@ package com.zero.core;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.util.Log;
-import android.util.SparseArray;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class ServiceList {
@@ -16,10 +17,19 @@ public class ServiceList {
 
     static final int MAX_ID = 1024;
 
-    private static final SparseArray<Service> mAllServices = new SparseArray<Service>();
+    private static final ConcurrentHashMap<String, IBinder> sOtherServiceManagers = new ConcurrentHashMap<String, IBinder>();
 
-    private static SparseArray<IBinder> sCache = new SparseArray<IBinder>();
+    private static final ConcurrentHashMap<Integer, Service> sAllServices = new ConcurrentHashMap<Integer, Service>();
 
+    /**
+     * 访问的接口cache
+     */
+    private static final ConcurrentHashMap<Integer, IBinder> sCache = new ConcurrentHashMap<Integer, IBinder>();
+
+
+    static void putOtherManager(String process, IBinder binder) {
+        sOtherServiceManagers.put(process, binder);
+    }
 
     /**
      * 【主进程】查询cache的Binder对象
@@ -41,6 +51,10 @@ public class ServiceList {
         sCache.put(id, binder);
     }
 
+    static void removeCacheBinder(int id) {
+        sCache.remove(id);
+    }
+
     /**
      * 【Server进程】获取install的Service
      *
@@ -48,7 +62,7 @@ public class ServiceList {
      * @return
      */
     static Service getService(int id) {
-        return mAllServices.get(id);
+        return sAllServices.get(id);
     }
 
     /**
@@ -58,20 +72,17 @@ public class ServiceList {
      * @param service
      */
     static void putService(int id, Service service) {
-        mAllServices.put(id, service);
+        sAllServices.put(id, service);
     }
 
     static IInterface getInterface(int id, IBinder binder) {
-        Service service = mAllServices.get(id);
+        Service service = sAllServices.get(id);
         if (service == null) {
             if (DEBUG) {
                 Log.e(TAG, "[getInterface]：service is null, id=" + id);
             }
         }
-        return mAllServices.get(id).asInterface(binder);
-    }
-
-    static void init() {
+        return sAllServices.get(id).asInterface(binder);
     }
 
 }

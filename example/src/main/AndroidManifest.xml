@@ -17,8 +17,8 @@
         </activity>
 
         <provider
-            android:name="com.zero.core.ServiceManagerProvider"
-            android:authorities="com.zero.core.ServiceManagerProvider"
+            android:name="com.zero.core.CoreProvider"
+            android:authorities="com.zero.core.CoreProvider"
             android:exported="false"
             android:process=":server" >
         </provider>

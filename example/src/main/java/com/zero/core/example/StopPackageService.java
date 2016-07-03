@@ -7,7 +7,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.Surface;
 
-import com.zero.core.App;
+import com.zero.core.AppUtil;
 import com.zero.core.AppEnv;
 import com.zero.core.Service;
 
@@ -54,7 +54,7 @@ public class StopPackageService extends IStopPackageService.Stub {
      * @return
      */
     public static IBinder getService() {
-        App.ensureInServerProcess();
+        AppUtil.ensureInServerProcess();
         if (null == instance) {
             instance = new StopPackageService();
         }
