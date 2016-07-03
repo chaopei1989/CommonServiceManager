@@ -1,5 +1,5 @@
 package com.zero.core;
 
-interface IServiceManagerService {
+interface ICommonServiceManager {
 	IBinder getService(int id);
 }

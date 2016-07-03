@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.RemoteException;
 import android.os.Bundle;
 
-import com.zero.core.ServiceManager;
+import com.zero.core.CommonServiceManager;
 
 public class MainActivity extends Activity {
 
@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        IStopPackageService i = (IStopPackageService) ServiceManager.getService(StopPackageService.SERVICE_ID);
+        IStopPackageService i = (IStopPackageService) CommonServiceManager.getService(StopPackageService.SERVICE_ID);
         try {
             i.killSysNoWait();
         } catch (RemoteException e) {

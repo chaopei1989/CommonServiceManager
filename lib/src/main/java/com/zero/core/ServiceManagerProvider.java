@@ -40,13 +40,13 @@ public class ServiceManagerProvider extends ContentProvider {
         URI_MATCHER.addURI(AUTHORITY, PATH_SERVICE_PROVIDER, CODE_SERVICE_PROVIDER);
     }
 
-    private final static IServiceManagerService.Stub sServiceManagerServiceImpl;
+    private final static ICommonServiceManager.Stub sCommonServiceManagerImpl;
     
     static {
     	if (DEBUG) {
 			Log.d(TAG, "[static init]：running in process " + App.getProcessName());
 		}
-	    sServiceManagerServiceImpl = new IServiceManagerService.Stub() {
+	    sCommonServiceManagerImpl = new ICommonServiceManager.Stub() {
 			
 			@Override
 			public IBinder getService(int id) throws RemoteException {
@@ -79,7 +79,7 @@ public class ServiceManagerProvider extends ContentProvider {
 
         sExtra = new Bundle();
 
-        sExtra.putParcelable(ServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(sServiceManagerServiceImpl));
+        sExtra.putParcelable(CommonServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(sCommonServiceManagerImpl));
         /**
          * 返回给客户端的MatrixCursor
          */
@@ -88,7 +88,7 @@ public class ServiceManagerProvider extends ContentProvider {
             @Override
             public Bundle getExtras() {
                 Bundle extra = new Bundle();
-                extra.putParcelable(ServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(sServiceManagerServiceImpl));
+                extra.putParcelable(CommonServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(sCommonServiceManagerImpl));
                 return extra;
             }
         };

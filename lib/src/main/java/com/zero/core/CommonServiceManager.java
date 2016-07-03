@@ -1,7 +1,5 @@
 package com.zero.core;
 
-import android.content.Context;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -12,11 +10,11 @@ import android.util.Log;
 
 import java.io.FileDescriptor;
 
-public class ServiceManager {
+public class CommonServiceManager {
 
     private static final boolean DEBUG = AppEnv.DEBUG;
 
-    private static final String TAG = ServiceManager.class.getSimpleName();
+    private static final String TAG = CommonServiceManager.class.getSimpleName();
 
     private static final Uri SERVICE_MANAGER_URI;
 
@@ -35,11 +33,11 @@ public class ServiceManager {
     }
 
     private static class ServiceManagerWrapper implements
-            IServiceManagerService, IBinder.DeathRecipient {
-        private IServiceManagerService mServerManagerImpl;
+            ICommonServiceManager, IBinder.DeathRecipient {
+        private ICommonServiceManager mServerManagerImpl;
 
-        final IServiceManagerService getServerManagerService() {
-            IServiceManagerService service = mServerManagerImpl;
+        final ICommonServiceManager getServerManagerService() {
+            ICommonServiceManager service = mServerManagerImpl;
             if (service != null) {
                 return service;
             }
@@ -51,8 +49,8 @@ public class ServiceManager {
          *
          * @return
          */
-        private synchronized IServiceManagerService queryService() {
-            IServiceManagerService service = mServerManagerImpl;
+        private synchronized ICommonServiceManager queryService() {
+            ICommonServiceManager service = mServerManagerImpl;
             if (service != null) {
                 return service;
             }
@@ -64,7 +62,7 @@ public class ServiceManager {
                     ServiceParcel serviceParcel = bundle.getParcelable(SERVICE_MANAGER_KEY);
                     if (null != serviceParcel) {
                         IBinder binder = serviceParcel.getBinder();
-                        service = IServiceManagerService.Stub.asInterface(binder);
+                        service = ICommonServiceManager.Stub.asInterface(binder);
                     }
                 }
             } catch (Exception e) {
@@ -95,7 +93,7 @@ public class ServiceManager {
          * @throws RemoteException
          */
         IBinder getOriginalService(int serviceId) throws RemoteException {
-            IServiceManagerService service = getServerManagerService();
+            ICommonServiceManager service = getServerManagerService();
             if (service != null) {
                 IBinder binder = service.getService(serviceId);
                 return binder;
@@ -105,7 +103,7 @@ public class ServiceManager {
 
         @Override
         public IBinder asBinder() {
-            IServiceManagerService serverChannel = getServerManagerService();
+            ICommonServiceManager serverChannel = getServerManagerService();
             if (serverChannel != null) {
                 return serverChannel.asBinder();
             }
@@ -117,7 +115,7 @@ public class ServiceManager {
          */
         @Override
         public IBinder getService(int serviceId) throws RemoteException {
-            IServiceManagerService service = getServerManagerService();
+            ICommonServiceManager service = getServerManagerService();
             if (service != null) {
                 IBinder binder = service.getService(serviceId);
                 if (binder != null) {
