@@ -40,6 +40,8 @@ public class CoreServiceManager {
 
         private ICoreServiceManager mServerManagerImpl;
 
+        private volatile int retriedCount = 0;
+
         synchronized private ICoreServiceManager getCoreServerManagerImpl() {
             if (null == mServerManagerImpl) {
                 refreshServiceManager();
@@ -55,7 +57,7 @@ public class CoreServiceManager {
                     mServerManagerImpl.asBinder().linkToDeath(this, 0);
                 } catch (RemoteException e) {
                     if (DEBUG) {
-                        Log.e(TAG, "[fetchLocked]：RemoteException", e);
+                        Log.e(TAG, "[refreshServiceManager]：RemoteException", e);
                     }
                 }
             }
@@ -81,7 +83,7 @@ public class CoreServiceManager {
                 }
             } catch (Exception e) {
                 if (DEBUG) {
-                    Log.e(TAG, "", e);
+                    Log.e(TAG, "[fetchLocked]", e);
                 }
             }
             return service;
@@ -138,7 +140,11 @@ public class CoreServiceManager {
         @Override
         public synchronized void binderDied() {
             if (DEBUG) {
-                Log.d(TAG, "[binderDied] service channel died");
+                Log.d(TAG, "[binderDied] service channel died, retried.");
+            }
+            try {
+                Thread.sleep((long)((retriedCount++) / 5.0f * 1000));
+            } catch (InterruptedException e) {
             }
             refreshServiceManager();
         }

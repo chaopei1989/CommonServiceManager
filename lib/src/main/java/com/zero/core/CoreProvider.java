@@ -114,11 +114,11 @@ public class CoreProvider extends ContentProvider {
                 @Override
                 public IBinder getService(int id) throws RemoteException {
                     if (DEBUG) {
-                        Log.d(TAG, "[getService] --> serviceId = " + id);
+                        Log.d(TAG, "[getCoreBundle] --> serviceId = " + id);
                     }
                     if (!AppUtil.runInServerProcess()) {
                         if (DEBUG) {
-                            Log.d(TAG, "[getService] AppUtil not runInServerProcess");
+                            Log.d(TAG, "[getCoreBundle] AppUtil not runInServerProcess");
                         }
                         return null;
                     }
@@ -132,7 +132,7 @@ public class CoreProvider extends ContentProvider {
                         return serviceCreator.getService();
                     }else {
                         if (DEBUG) {
-                            Log.d(TAG, "[getService] serviceCreator == null");
+                            Log.d(TAG, "[getCoreBundle] serviceCreator == null");
                         }
                     }
 
@@ -141,7 +141,7 @@ public class CoreProvider extends ContentProvider {
 
                 @Override
                 public void installOtherManager(IBinder other) throws RemoteException {
-                    // todo
+                    // todo Other managers register in.
                 }
             };
 
