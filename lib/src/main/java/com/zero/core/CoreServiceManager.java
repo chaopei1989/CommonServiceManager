@@ -26,6 +26,9 @@ public class CoreServiceManager {
                 + CoreProvider.PATH_SERVICE_PROVIDER);
     }
 
+    /**
+     * 进程单例
+     */
     private static ServiceManagerWrapper sServiceManagerWrapper = new ServiceManagerWrapper();
 
     static ServiceManagerWrapper getServiceManagerImpl() {
@@ -34,14 +37,28 @@ public class CoreServiceManager {
 
     private static class ServiceManagerWrapper implements
             ICoreServiceManager, IBinder.DeathRecipient {
+
         private ICoreServiceManager mServerManagerImpl;
 
-        final ICoreServiceManager getCoreServerManagerImpl() {
-            ICoreServiceManager service = mServerManagerImpl;
-            if (service != null) {
-                return service;
+        synchronized private ICoreServiceManager getCoreServerManagerImpl() {
+            if (null == mServerManagerImpl) {
+                refreshServiceManager();
             }
-            return queryService();
+            return mServerManagerImpl;
+        }
+
+        private void refreshServiceManager() {
+            mServerManagerImpl = fetchLocked();
+            if (null != mServerManagerImpl) {
+                //todo 初始化 other managers
+                try {
+                    mServerManagerImpl.asBinder().linkToDeath(this, 0);
+                } catch (RemoteException e) {
+                    if (DEBUG) {
+                        Log.e(TAG, "[fetchLocked]：RemoteException", e);
+                    }
+                }
+            }
         }
 
         /**
@@ -49,11 +66,8 @@ public class CoreServiceManager {
          *
          * @return
          */
-        private synchronized ICoreServiceManager queryService() {
-            ICoreServiceManager service = mServerManagerImpl;
-            if (service != null) {
-                return service;
-            }
+        private synchronized ICoreServiceManager fetchLocked() {
+            ICoreServiceManager service = null;
 
             try {
                 Bundle bundle = AppUtil.getApplication().getContentResolver().call(SERVICE_MANAGER_URI, CoreProvider.PATH_SERVICE_PROVIDER, null, null);
@@ -68,19 +82,6 @@ public class CoreServiceManager {
             } catch (Exception e) {
                 if (DEBUG) {
                     Log.e(TAG, "", e);
-                }
-            } finally {
-            }
-
-            if (service != null) {
-                //todo 初始化 other managers
-                mServerManagerImpl = service;
-                try {
-                    service.asBinder().linkToDeath(this, 0);
-                } catch (RemoteException e) {
-                    if (DEBUG) {
-                        Log.e(TAG, "[queryService]：RemoteException", e);
-                    }
                 }
             }
             return service;
@@ -135,10 +136,11 @@ public class CoreServiceManager {
         }
 
         @Override
-        public void binderDied() {
+        public synchronized void binderDied() {
             if (DEBUG) {
                 Log.d(TAG, "[binderDied] service channel died");
             }
+            refreshServiceManager();
         }
     }
 
