@@ -10,7 +10,7 @@ import java.io.InputStreamReader;
 
 /**
  * Created by chaopei on 2016/7/2.
- * 需要继承
+ * Application 工具类
  */
 public class AppUtil {
 

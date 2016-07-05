@@ -27,34 +27,34 @@ public class CoreServiceManager {
     }
 
     /**
-     * 进程单例
+     * 进程单例，没有其他地方赋值了
      */
-    private static ServiceManagerWrapper sServiceManagerWrapper = new ServiceManagerWrapper();
+    private static final CoreServiceManagerProxy CORE_SERVICE_MANAGER_WRAPPER = new CoreServiceManagerProxy();
 
-    static ServiceManagerWrapper getServiceManagerImpl() {
-        return sServiceManagerWrapper;
-    }
-
-    private static class ServiceManagerWrapper implements
+    private static class CoreServiceManagerProxy implements
             ICoreServiceManager, IBinder.DeathRecipient {
 
-        private ICoreServiceManager mServerManagerImpl;
+        private ICoreServiceManager mBase;
+
+        private IOtherServiceManager.Stub mOtherServiceManagerImpl;
 
         private volatile int retriedCount = 0;
 
-        synchronized private ICoreServiceManager getCoreServerManagerImpl() {
-            if (null == mServerManagerImpl) {
+        private synchronized ICoreServiceManager getCoreServerManagerImpl() {
+            if (null == mBase) {
                 refreshServiceManager();
             }
-            return mServerManagerImpl;
+            return mBase;
         }
 
         private void refreshServiceManager() {
-            mServerManagerImpl = fetchLocked();
-            if (null != mServerManagerImpl) {
-                //todo 初始化 other managers
+            mBase = fetchLocked();
+            if (null != mBase) {
                 try {
-                    mServerManagerImpl.asBinder().linkToDeath(this, 0);
+                    mBase.asBinder().linkToDeath(this, 0);
+                    if (!AppUtil.runInServerProcess()) {
+                        mBase.installOtherManager(getOtherServiceManagerImpl());
+                    }
                 } catch (RemoteException e) {
                     if (DEBUG) {
                         Log.e(TAG, "[refreshServiceManager]：RemoteException", e);
@@ -96,7 +96,7 @@ public class CoreServiceManager {
          * @return
          * @throws RemoteException
          */
-        IBinder getOriginalService(int serviceId) throws RemoteException {
+        private IBinder getOriginalService(int serviceId) throws RemoteException {
             ICoreServiceManager service = getCoreServerManagerImpl();
             if (service != null) {
                 IBinder binder = service.getService(serviceId);
@@ -123,7 +123,7 @@ public class CoreServiceManager {
             if (service != null) {
                 IBinder binder = service.getService(serviceId);
                 if (binder != null) {
-                    return RemoteBinderWrapper.getService(serviceId, binder);
+                    return RemoteBinderProxy.createInterface(serviceId, binder);
                 }
             }
             return null;
@@ -143,10 +143,36 @@ public class CoreServiceManager {
                 Log.d(TAG, "[binderDied] service channel died, retried.");
             }
             try {
-                Thread.sleep((long)((retriedCount++) / 5.0f * 1000));
+                Thread.sleep((long) ((retriedCount++) / 5.0f * 1000));
             } catch (InterruptedException e) {
             }
             refreshServiceManager();
+        }
+
+        private IOtherServiceManager.Stub getOtherServiceManagerImpl() {
+            if (null == mOtherServiceManagerImpl) {
+                mOtherServiceManagerImpl = new IOtherServiceManager.Stub() {
+
+                    @Override
+                    public IBinder getService(int id) throws RemoteException {
+                        if (id < ServiceList.MIN_ID || id > ServiceList.MAX_ID) {
+                            throw new IllegalArgumentException();
+                        }
+
+                        Service serviceCreator = ServiceList.getService(id);
+                        if (serviceCreator != null) {
+                            return serviceCreator.getService();
+                        }else {
+                            if (DEBUG) {
+                                Log.d(TAG, "[getCoreBundle] serviceCreator == null");
+                            }
+                        }
+
+                        return null;
+                    }
+                };
+            }
+            return mOtherServiceManagerImpl;
         }
     }
 
@@ -155,13 +181,13 @@ public class CoreServiceManager {
      *
      * @author chaopei
      */
-    private static class RemoteBinderWrapper implements IBinder,
+    private static class RemoteBinderProxy implements IBinder,
             IBinder.DeathRecipient {
 
-        private IBinder mRemoteBinderImpl;
+        private IBinder mRemote;
         private int mServiceId;
 
-        public static IBinder getService(int serviceId, IBinder binder) {
+        public static IBinder createInterface(int serviceId, IBinder binder) {
 
             String descriptor = null;
             try {
@@ -172,30 +198,27 @@ public class CoreServiceManager {
             if (((iin != null) && AppUtil.runInServerProcess())) {
                 return binder;
             }
-            return new RemoteBinderWrapper(serviceId, binder);
+            return new RemoteBinderProxy(serviceId, binder);
         }
 
-        private RemoteBinderWrapper(int id, IBinder binder) {
-            mRemoteBinderImpl = binder;
+        private RemoteBinderProxy(int id, IBinder binder) {
+            mRemote = binder;
             mServiceId = id;
             try {
-                mRemoteBinderImpl.linkToDeath(this, 0);
+                mRemote.linkToDeath(this, 0);
             } catch (RemoteException e) {
                 if (DEBUG) {
-                    Log.e(TAG,
-                            "[ModuleChannelWrapper constructor]：RemoteException",
-                            e);
+                    Log.e(TAG, "[ModuleChannelWrapper constructor]：RemoteException", e);
                 }
             }
         }
 
         private IBinder getRemoteBinder() throws RemoteException {
-            IBinder remote = mRemoteBinderImpl;
+            IBinder remote = mRemote;
             if (remote != null) {
                 return remote;
             }
-            ServiceManagerWrapper serverChannel = (ServiceManagerWrapper) getServiceManagerImpl();
-            remote = serverChannel.getOriginalService(mServiceId);
+            remote = CORE_SERVICE_MANAGER_WRAPPER.getOriginalService(mServiceId);
             if (remote == null) {
                 throw new RemoteException();
             }
@@ -267,7 +290,7 @@ public class CoreServiceManager {
             if (DEBUG) {
                 Log.d(TAG, "[binderDied]");
             }
-            mRemoteBinderImpl = null;
+            mRemote = null;
             ServiceList.removeCacheBinder(mServiceId);
         }
 
@@ -280,8 +303,10 @@ public class CoreServiceManager {
 
     }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /**
-     * 拿到IBinder后直接转接口，外部一律用此接口
+     * 对外接口，拿到IBinder后直接转接口，外部一律用此接口
      *
      * @param id
      * @return
@@ -292,10 +317,9 @@ public class CoreServiceManager {
             if (DEBUG) {
                 Log.d(TAG, "[getService]：binder has no cache");
             }
-            ServiceManagerWrapper serviceManagerWrapper = getServiceManagerImpl();
-            if (serviceManagerWrapper != null) {
+            if (CORE_SERVICE_MANAGER_WRAPPER != null) {
                 try {
-                    binder = serviceManagerWrapper.getService(id);
+                    binder = CORE_SERVICE_MANAGER_WRAPPER.getService(id);
                 } catch (RemoteException e) {
                     if (DEBUG) {
                         Log.e(TAG, "[getService]：RemoteException", e);

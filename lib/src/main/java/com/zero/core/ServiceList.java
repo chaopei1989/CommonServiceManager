@@ -6,7 +6,9 @@ import android.util.Log;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-
+/**
+ * 服务的实现列表
+ */
 public class ServiceList {
 
     private static final boolean DEBUG = AppEnv.DEBUG;
