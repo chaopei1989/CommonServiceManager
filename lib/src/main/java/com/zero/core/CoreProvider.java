@@ -126,22 +126,42 @@ public class CoreProvider extends ContentProvider {
                     if (id < ServiceList.MIN_ID || id > ServiceList.MAX_ID) {
                         throw new IllegalArgumentException();
                     }
-
-                    Service serviceCreator = ServiceList.getService(id);
-                    if (serviceCreator != null) {
-                        return serviceCreator.getService();
-                    }else {
-                        if (DEBUG) {
-                            Log.d(TAG, "[getCoreBundle] serviceCreator == null");
-                        }
+                    Service copy = ServiceList.getService(id);
+                    if (null == copy) {
+                        throw new RuntimeException("Service.install() must be run in every process before getService.");
                     }
-
-                    return null;
+                    if (copy.isImplementProcess()) { // 就是实现在 server 进程
+                        Service serviceCreator = ServiceList.getService(id);
+                        if (serviceCreator != null) {
+                            return serviceCreator.getService();
+                        }else {
+                            if (DEBUG) {
+                                Log.d(TAG, "[getCoreBundle] serviceCreator == null");
+                            }
+                        }
+                        return null;
+                    } else { // 实现在其他进程
+                        String implProcessName = AppUtil.getPackageName() + copy.getProcessSuffix();
+                        IOtherServiceManager manager = ServiceList.getOtherAvailableManager(implProcessName);
+                        if (null != manager) {
+                            if (DEBUG) {
+                                Log.d(TAG, "[getCoreBundle] has found OtherAvailableManager in process " + implProcessName);
+                            }
+                            try {
+                                return manager.getService(id);
+                            } catch (RemoteException e) {
+                            }
+                        }
+                        if (DEBUG) {
+                            Log.d(TAG, "[getCoreBundle] no OtherAvailableManager found in process " + implProcessName);
+                        }
+                        return null;
+                    }
                 }
 
                 @Override
-                public void installOtherManager(IBinder other) throws RemoteException {
-                    // todo Other managers register in.
+                public void installOtherManager(String processName, IBinder other) throws RemoteException {
+                    ServiceList.putOtherManager(processName, other);
                 }
             };
 

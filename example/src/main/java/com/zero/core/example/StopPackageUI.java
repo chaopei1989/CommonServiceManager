@@ -8,7 +8,7 @@ import android.util.Log;
 import android.view.Surface;
 
 import com.zero.core.AppEnv;
-import com.zero.core.CoreServiceManager;
+import com.zero.core.AppUtil;
 import com.zero.core.Service;
 
 /**
@@ -17,15 +17,15 @@ import com.zero.core.Service;
  * @author chaopei
  *
  */
-public class StopPackageService extends IStopPackageService.Stub {
+public class StopPackageUI extends IStopPackageService.Stub {
 
     private static final boolean DEBUG = AppEnv.DEBUG;
 
-    private static final String TAG = StopPackageService.class.getSimpleName();
+    private static final String TAG = StopPackageUI.class.getSimpleName();
 
-    public static final int SERVICE_ID = 0;
+    public static final int SERVICE_ID = 1;
 
-    private static StopPackageService instance;
+    private static StopPackageUI instance;
 
     final public static Service INSTALLER = new Service() {
 
@@ -36,16 +36,21 @@ public class StopPackageService extends IStopPackageService.Stub {
 
         @Override
         public IBinder getService() {
-            return StopPackageService.getService();
+            return StopPackageUI.getService();
+        }
+
+        @Override
+        public String getProcessSuffix() {
+            return "";//主进程
         }
 
         @Override
         public IInterface asInterface(IBinder binder) {
-            return IStopPackageService.Stub.asInterface(binder);
+            return Stub.asInterface(binder);
         }
     };
 
-    private StopPackageService() {
+    private StopPackageUI() {
     }
 
     /**
@@ -56,7 +61,7 @@ public class StopPackageService extends IStopPackageService.Stub {
     public static IBinder getService() {
         INSTALLER.ensureInRightProcess();
         if (null == instance) {
-            instance = new StopPackageService();
+            instance = new StopPackageUI();
         }
         return instance;
     }
@@ -64,14 +69,14 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killNoWait(String name) throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killNoWait]：" + name);
+            Log.d(TAG, "[killNoWait ui]：" + name);
         }
     }
 
     @Override
     public void killWait(String name) throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killWait]：" + name);
+            Log.d(TAG, "[killWait ui]：" + name);
         }
 
     }
@@ -79,7 +84,7 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killAllNoWait(String[] names) throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killAllNoWait]：" + names.length);
+            Log.d(TAG, "[killAllNoWait ui]：" + names.length);
         }
 
     }
@@ -87,7 +92,7 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killAllWait(String[] names) throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killAllWait]：" + names.length);
+            Log.d(TAG, "[killAllWait ui]：" + names.length);
         }
 
     }
@@ -95,20 +100,15 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killSysNoWait() throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killSysNoWait]");
+            Log.d(TAG, "[killSysNoWait ui]");
         }
-        IStopPackageService iui = (IStopPackageService) CoreServiceManager.getService(StopPackageUI.SERVICE_ID);
-        try {
-            iui.killSysNoWait();
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        Process.setThreadPriority(Process.THREAD_PRIORITY_FOREGROUND);
     }
 
     @Override
     public void killSysWait() throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killSysWait]", new Throwable());
+            Log.d(TAG, "[killSysWait ui]", new Throwable());
         }
 //        int a=0;a=1/a;
         throw new NullPointerException();
@@ -117,7 +117,7 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killUserNoWait() throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killUserNoWait]");
+            Log.d(TAG, "[killUserNoWait ui]");
         }
 
     }
@@ -125,7 +125,7 @@ public class StopPackageService extends IStopPackageService.Stub {
     @Override
     public void killUserWait(Surface a) throws RemoteException {
         if (DEBUG) {
-            Log.d(TAG, "[killUserWait]");
+            Log.d(TAG, "[killUserWait ui]");
         }
     }
 

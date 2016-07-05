@@ -29,7 +29,7 @@ public class CoreServiceManager {
     /**
      * 进程单例，没有其他地方赋值了
      */
-    private static final CoreServiceManagerProxy CORE_SERVICE_MANAGER_WRAPPER = new CoreServiceManagerProxy();
+    private static final CoreServiceManagerProxy CORE_SERVICE_MANAGER_PROXY = new CoreServiceManagerProxy();
 
     private static class CoreServiceManagerProxy implements
             ICoreServiceManager, IBinder.DeathRecipient {
@@ -48,12 +48,15 @@ public class CoreServiceManager {
         }
 
         private void refreshServiceManager() {
+            if (DEBUG) {
+                Log.d(TAG, "[refreshServiceManager]");
+            }
             mBase = fetchLocked();
             if (null != mBase) {
                 try {
                     mBase.asBinder().linkToDeath(this, 0);
                     if (!AppUtil.runInServerProcess()) {
-                        mBase.installOtherManager(getOtherServiceManagerImpl());
+                        mBase.installOtherManager(AppUtil.getProcessName(), getOtherServiceManagerImpl());
                     }
                 } catch (RemoteException e) {
                     if (DEBUG) {
@@ -119,21 +122,19 @@ public class CoreServiceManager {
          */
         @Override
         public IBinder getService(int serviceId) throws RemoteException {
-            ICoreServiceManager service = getCoreServerManagerImpl();
-            if (service != null) {
-                IBinder binder = service.getService(serviceId);
-                if (binder != null) {
-                    return RemoteBinderProxy.createInterface(serviceId, binder);
-                }
+            IBinder binder = getOriginalService(serviceId);
+            if (null != binder) {
+                return RemoteBinderProxy.createInterface(serviceId, binder);
+            } else {
+                return null;
             }
-            return null;
         }
 
         @Override
-        public void installOtherManager(IBinder other) throws RemoteException {
+        public void installOtherManager(String processName, IBinder other) throws RemoteException {
             ICoreServiceManager service = getCoreServerManagerImpl();
             if (service != null) {
-                service.installOtherManager(other);
+                service.installOtherManager(processName, other);
             }
         }
 
@@ -162,9 +163,9 @@ public class CoreServiceManager {
                         Service serviceCreator = ServiceList.getService(id);
                         if (serviceCreator != null) {
                             return serviceCreator.getService();
-                        }else {
+                        } else {
                             if (DEBUG) {
-                                Log.d(TAG, "[getCoreBundle] serviceCreator == null");
+                                Log.d(TAG, "[getOtherServiceManagerImpl] serviceCreator == null");
                             }
                         }
 
@@ -218,7 +219,7 @@ public class CoreServiceManager {
             if (remote != null) {
                 return remote;
             }
-            remote = CORE_SERVICE_MANAGER_WRAPPER.getOriginalService(mServiceId);
+            remote = CORE_SERVICE_MANAGER_PROXY.getOriginalService(mServiceId);
             if (remote == null) {
                 throw new RemoteException();
             }
@@ -312,14 +313,26 @@ public class CoreServiceManager {
      * @return
      */
     public static IInterface getService(int id) {
+        // 调用前一定会事先调用 Service.install 方法，每个进程都会预先执行一次。
+        Service copy = ServiceList.getService(id);
+        if (null == copy) {
+            throw new RuntimeException("Service.install() must be run in every process before getService.");
+        }
+        if (copy.isImplementProcess()) {
+            if (DEBUG) {
+                Log.d(TAG, "[getService]：Run in impl process, return directly.");
+            }
+            return copy.asInterface(copy.getService());
+        }
+
         IBinder binder = ServiceList.getCacheBinder(id);
         if (null == binder) {
             if (DEBUG) {
                 Log.d(TAG, "[getService]：binder has no cache");
             }
-            if (CORE_SERVICE_MANAGER_WRAPPER != null) {
+            if (CORE_SERVICE_MANAGER_PROXY != null) {
                 try {
-                    binder = CORE_SERVICE_MANAGER_WRAPPER.getService(id);
+                    binder = CORE_SERVICE_MANAGER_PROXY.getService(id);
                 } catch (RemoteException e) {
                     if (DEBUG) {
                         Log.e(TAG, "[getService]：RemoteException", e);
@@ -341,7 +354,7 @@ public class CoreServiceManager {
             return null;
         }
         if (DEBUG) {
-            Log.d(TAG, "[getService]：binder is not null");
+            Log.d(TAG, "[getService]：binder returned");
         }
         return ServiceList.getInterface(id, binder);
     }

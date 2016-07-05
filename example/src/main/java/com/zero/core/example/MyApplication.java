@@ -20,6 +20,7 @@ public class MyApplication extends Application {
             Log.d(TAG, "[static init]：running in process " + AppUtil.getProcessName());
         }
         StopPackageService.INSTALLER.install();
+        StopPackageUI.INSTALLER.install();
     }
 
     @Override

@@ -26,10 +26,19 @@ public class AppUtil {
 
     private static String sCurProcessName;
 
+    private static String sPackageName;
+
     private static Application sInstance;
 
     public static Application getApplication() {
         return sInstance;
+    }
+
+    public static String getPackageName() {
+        if (null == sPackageName) {
+            sPackageName = getApplication().getPackageName();
+        }
+        return sPackageName;
     }
 
     /**
@@ -89,12 +98,4 @@ public class AppUtil {
         return sCurProcessName;
     }
 
-    /**
-     * 确保执行在 server 进程，如果不是则崩溃
-     */
-    public static void ensureInServerProcess() {
-        if (!runInServerProcess()) {
-            throw new RuntimeException("please ensure In ServerProcess");
-        }
-    }
 }

@@ -4,6 +4,7 @@ import android.os.IBinder;
 import android.os.IInterface;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,7 +20,10 @@ public class ServiceList {
 
     static final int MAX_ID = 1024;
 
-    private static final ConcurrentHashMap<String, IBinder> sOtherServiceManagers = new ConcurrentHashMap<String, IBinder>();
+    /**
+     * 非server进程注册的 ServiceManager
+     */
+    private static final HashMap<String, IOtherServiceManager> sOtherServiceManagers = new HashMap<String, IOtherServiceManager>();
 
     private static final ConcurrentHashMap<Integer, Service> sAllServices = new ConcurrentHashMap<Integer, Service>();
 
@@ -29,8 +33,24 @@ public class ServiceList {
     private static final ConcurrentHashMap<Integer, IBinder> sCache = new ConcurrentHashMap<Integer, IBinder>();
 
 
-    static void putOtherManager(String process, IBinder binder) {
-        sOtherServiceManagers.put(process, binder);
+    synchronized static void putOtherManager(String process, IBinder binder) {
+        if (DEBUG) {
+            Log.d(TAG, "[putOtherManager] process="+process);
+        }
+        sOtherServiceManagers.put(process, IOtherServiceManager.Stub.asInterface(binder));
+    }
+
+    synchronized static IOtherServiceManager getOtherAvailableManager(String process) {
+        if (DEBUG) {
+            Log.d(TAG, "[getOtherAvailableManager] process="+process);
+        }
+        IOtherServiceManager manager = sOtherServiceManagers.get(process);
+        if (null != manager && manager.asBinder().pingBinder()) {
+            return manager;
+        } else {
+            sOtherServiceManagers.remove(process);
+            return null;
+        }
     }
 
     /**

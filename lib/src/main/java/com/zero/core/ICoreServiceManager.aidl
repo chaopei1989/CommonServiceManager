@@ -4,6 +4,6 @@ interface ICoreServiceManager {
 
 	IBinder getService(int id);
 
-	void installOtherManager(IBinder other);
+	void installOtherManager(String callingProcessName, IBinder other);
 
 }
