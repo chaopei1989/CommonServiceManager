@@ -9,9 +9,8 @@ import com.zero.core.Service;
 
 /**
  * 测试例子
- * 
- * @author chaopei
  *
+ * @author chaopei
  */
 public class StopPackageService extends IStopPackage.Stub {
 
@@ -21,7 +20,7 @@ public class StopPackageService extends IStopPackage.Stub {
 
     public static final int SERVICE_ID = 0;
 
-    final public static Service INSTALLER = new Service(StopPackageService.class) {
+    public static final Service INSTALLER = new Service(StopPackageService.class) {
 
         @Override
         public int getServiceId() {

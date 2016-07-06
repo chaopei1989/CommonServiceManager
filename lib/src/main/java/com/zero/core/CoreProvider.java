@@ -11,24 +11,24 @@ import android.os.RemoteException;
 import android.util.Log;
 
 public class CoreProvider extends ContentProvider {
-	
-	private static final boolean DEBUG = AppEnv.DEBUG;
-	
-	private static final String TAG = CoreProvider.class.getSimpleName();
-	
-	static final String AUTHORITY = "com.zero.core.CoreProvider";
-	
-	static final String PATH_SERVICE_PROVIDER = "serviceprovide";
-    
+
+    private static final boolean DEBUG = AppEnv.DEBUG;
+
+    private static final String TAG = CoreProvider.class.getSimpleName();
+
+    static final String AUTHORITY = "com.zero.core.CoreProvider";
+
+    static final String PATH_SERVICE_PROVIDER = "serviceprovide";
+
     private static final int CODE_SERVICE_PROVIDER = 0;
-    
-	@Override
-	public boolean onCreate() {
-		AppUtil.initServerProcess(true);
-		return false;
-	}
-	
-	private static final UriMatcher URI_MATCHER;
+
+    @Override
+    public boolean onCreate() {
+        AppUtil.initServerProcess(true);
+        return false;
+    }
+
+    private static final UriMatcher URI_MATCHER;
 
     private Bundle mCoreBundle;
 
@@ -70,42 +70,42 @@ public class CoreProvider extends ContentProvider {
     }
 
     @Override
-	public Cursor query(Uri uri, String[] projection, String selection,
-			String[] selectionArgs, String sortOrder) {
+    public Cursor query(Uri uri, String[] projection, String selection,
+                        String[] selectionArgs, String sortOrder) {
 //		if (DEBUG) {
 //            Log.d(TAG, "[query]：uri = " + (uri == null ? "null" : uri.toString()));
 //        }
 //        final int matchCode = URI_MATCHER.match(uri);
 //
 //        if (matchCode == CODE_SERVICE_PROVIDER) {
-//        	if (DEBUG) {
+//        if (DEBUG) {
 //                Log.d(TAG, "[query]：CODE_SERVICE_PROVIDER");
 //            }
 //            return sCursor;
 //        }
-		return null;
-	}
+        return null;
+    }
 
-	@Override
-	public String getType(Uri uri) {
-		return null;
-	}
+    @Override
+    public String getType(Uri uri) {
+        return null;
+    }
 
-	@Override
-	public Uri insert(Uri uri, ContentValues values) {
-		return null;
-	}
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        return null;
+    }
 
-	@Override
-	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		return 0;
-	}
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        return 0;
+    }
 
-	@Override
-	public int update(Uri uri, ContentValues values, String selection,
-			String[] selectionArgs) {
-		return 0;
-	}
+    @Override
+    public int update(Uri uri, ContentValues values, String selection,
+                      String[] selectionArgs) {
+        return 0;
+    }
 
     private Bundle getCoreBundle() {
         if (null == mCoreBundle) {
@@ -134,7 +134,7 @@ public class CoreProvider extends ContentProvider {
                         Service serviceCreator = ServiceList.getService(id);
                         if (serviceCreator != null) {
                             return serviceCreator.getService();
-                        }else {
+                        } else {
                             if (DEBUG) {
                                 Log.d(TAG, "[getCoreBundle] serviceCreator == null");
                             }

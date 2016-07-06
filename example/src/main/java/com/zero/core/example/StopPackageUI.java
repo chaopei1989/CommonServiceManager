@@ -9,9 +9,8 @@ import com.zero.core.Service;
 
 /**
  * 测试例子
- * 
- * @author chaopei
  *
+ * @author chaopei
  */
 public class StopPackageUI extends IStopPackage.Stub {
 
@@ -21,7 +20,7 @@ public class StopPackageUI extends IStopPackage.Stub {
 
     public static final int SERVICE_ID = 1;
 
-    final public static Service INSTALLER = new Service(StopPackageUI.class) {
+    public static final Service INSTALLER = new Service(StopPackageUI.class) {
 
         @Override
         public int getServiceId() {
@@ -30,7 +29,7 @@ public class StopPackageUI extends IStopPackage.Stub {
 
         @Override
         public String getProcessSuffix() {
-            return "";//主进程
+            return ""; //主进程
         }
 
     };

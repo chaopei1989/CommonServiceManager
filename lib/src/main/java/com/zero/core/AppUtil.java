@@ -43,6 +43,7 @@ public class AppUtil {
 
     /**
      * 一般在Application onCreate 时使用，必须调用的方法
+     *
      * @param app
      */
     public static void init(Application app) {
@@ -70,8 +71,8 @@ public class AppUtil {
         try {
             reader = new BufferedReader(new InputStreamReader(
                     new FileInputStream("/proc/self/cmdline")));
-            String line;
-            if ((line = reader.readLine()) != null) {
+            String line = reader.readLine();
+            if (null != line) {
                 return line.trim();
             }
         } catch (Exception e) {
@@ -79,11 +80,12 @@ public class AppUtil {
                 Log.e(TAG, "[getCurrentProcessName]: ", e);
             }
         } finally {
-            if (reader != null)
+            if (reader != null) {
                 try {
                     reader.close();
                 } catch (Exception e) {
                 }
+            }
         }
         return null;
     }

@@ -23,32 +23,32 @@ public class ServiceList {
     /**
      * 非server进程注册的 ServiceManager
      */
-    private static final HashMap<String, IOtherServiceManager> sOtherServiceManagers = new HashMap<String, IOtherServiceManager>();
+    private static final HashMap<String, IOtherServiceManager> OTHER_SERVICE_MANAGERS = new HashMap<String, IOtherServiceManager>();
 
-    private static final ConcurrentHashMap<Integer, Service> sAllServices = new ConcurrentHashMap<Integer, Service>();
+    private static final ConcurrentHashMap<Integer, Service> ALL_SERVICES = new ConcurrentHashMap<Integer, Service>();
 
     /**
      * 访问的接口cache
      */
-    private static final ConcurrentHashMap<Integer, IBinder> sCache = new ConcurrentHashMap<Integer, IBinder>();
+    private static final ConcurrentHashMap<Integer, IBinder> BINDER_CACHE = new ConcurrentHashMap<Integer, IBinder>();
 
 
-    synchronized static void putOtherManager(String process, IBinder binder) {
+    static synchronized void putOtherManager(String process, IBinder binder) {
         if (DEBUG) {
-            Log.d(TAG, "[putOtherManager] process="+process);
+            Log.d(TAG, "[putOtherManager] process=" + process);
         }
-        sOtherServiceManagers.put(process, IOtherServiceManager.Stub.asInterface(binder));
+        OTHER_SERVICE_MANAGERS.put(process, IOtherServiceManager.Stub.asInterface(binder));
     }
 
-    synchronized static IOtherServiceManager getOtherAvailableManager(String process) {
+    static synchronized IOtherServiceManager getOtherAvailableManager(String process) {
         if (DEBUG) {
-            Log.d(TAG, "[getOtherAvailableManager] process="+process);
+            Log.d(TAG, "[getOtherAvailableManager] process=" + process);
         }
-        IOtherServiceManager manager = sOtherServiceManagers.get(process);
+        IOtherServiceManager manager = OTHER_SERVICE_MANAGERS.get(process);
         if (null != manager && manager.asBinder().pingBinder()) {
             return manager;
         } else {
-            sOtherServiceManagers.remove(process);
+            OTHER_SERVICE_MANAGERS.remove(process);
             return null;
         }
     }
@@ -60,7 +60,7 @@ public class ServiceList {
      * @return
      */
     static IBinder getCacheBinder(int id) {
-        return sCache.get(id);
+        return BINDER_CACHE.get(id);
     }
 
     /**
@@ -70,11 +70,11 @@ public class ServiceList {
      * @return
      */
     static void putCacheBinder(int id, IBinder binder) {
-        sCache.put(id, binder);
+        BINDER_CACHE.put(id, binder);
     }
 
     static void removeCacheBinder(int id) {
-        sCache.remove(id);
+        BINDER_CACHE.remove(id);
     }
 
     /**
@@ -84,7 +84,7 @@ public class ServiceList {
      * @return
      */
     static Service getService(int id) {
-        return sAllServices.get(id);
+        return ALL_SERVICES.get(id);
     }
 
     /**
@@ -94,17 +94,17 @@ public class ServiceList {
      * @param service
      */
     static void putService(int id, Service service) {
-        sAllServices.put(id, service);
+        ALL_SERVICES.put(id, service);
     }
 
     static IInterface getInterface(int id, IBinder binder) {
-        Service service = sAllServices.get(id);
+        Service service = ALL_SERVICES.get(id);
         if (service == null) {
             if (DEBUG) {
                 Log.e(TAG, "[getInterface]：service is null, id=" + id);
             }
         }
-        return sAllServices.get(id).asInterface(binder);
+        return ALL_SERVICES.get(id).asInterface(binder);
     }
 
 }

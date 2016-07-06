@@ -55,6 +55,7 @@ public abstract class Service {
     /**
      * 返回运行所在进程名的结尾，如果就是运行在server进程则不用覆写(默认返回null)，空字符代表主进程
      * 例如，运行在 [package]:float，那就 return ":float"，不能写错.
+     *
      * @return
      */
     public String getProcessSuffix() {
@@ -93,7 +94,7 @@ public abstract class Service {
      */
     public void ensureInRightProcess() {
         if (!isImplementProcess()) {
-            throw new RuntimeException("please ensure In process "+ getProcessSuffix());
+            throw new RuntimeException("please ensure In process " + getProcessSuffix());
         }
     }
 }
