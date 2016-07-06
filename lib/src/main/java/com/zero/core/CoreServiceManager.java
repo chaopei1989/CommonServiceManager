@@ -38,8 +38,6 @@ public class CoreServiceManager {
 
         private IOtherServiceManager.Stub mOtherServiceManagerImpl;
 
-        private volatile int retriedCount = 0;
-
         private synchronized ICoreServiceManager getCoreServerManagerImpl() {
             if (null == mBase) {
                 refreshServiceManager();
@@ -142,10 +140,6 @@ public class CoreServiceManager {
         public synchronized void binderDied() {
             if (DEBUG) {
                 Log.d(TAG, "[binderDied] service channel died, retried.");
-            }
-            try {
-                Thread.sleep((long) ((retriedCount++) / 5.0f * 1000));
-            } catch (InterruptedException e) {
             }
             refreshServiceManager();
         }
