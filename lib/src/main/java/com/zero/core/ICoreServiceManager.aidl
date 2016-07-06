@@ -2,8 +2,10 @@ package com.zero.core;
 
 interface ICoreServiceManager {
 
-	IBinder getService(int id);
+	IBinder getCoreService(String id);
 
 	void installOtherManager(String callingProcessName, IBinder other);
+
+	IBinder getOtherManager(String processName);
 
 }

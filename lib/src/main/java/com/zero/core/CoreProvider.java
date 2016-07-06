@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.text.TextUtils;
 import android.util.Log;
 
 public class CoreProvider extends ContentProvider {
@@ -24,7 +25,7 @@ public class CoreProvider extends ContentProvider {
 
     @Override
     public boolean onCreate() {
-        AppUtil.initServerProcess(true);
+        AppUtil.initCoreProcess(true);
         return false;
     }
 
@@ -112,56 +113,53 @@ public class CoreProvider extends ContentProvider {
             ICoreServiceManager.Stub coreServiceManagerImpl = new ICoreServiceManager.Stub() {
 
                 @Override
-                public IBinder getService(int id) throws RemoteException {
+                public IBinder getCoreService(String id) throws RemoteException {
                     if (DEBUG) {
                         Log.d(TAG, "[getCoreBundle] --> serviceId = " + id);
                     }
-                    if (!AppUtil.runInServerProcess()) {
+                    if (!AppUtil.runInCoreProcess()) {
                         if (DEBUG) {
-                            Log.d(TAG, "[getCoreBundle] AppUtil not runInServerProcess");
+                            Log.d(TAG, "[getCoreBundle] AppUtil not runInCoreProcess");
                         }
                         return null;
                     }
 
-                    if (id < ServiceList.MIN_ID || id > ServiceList.MAX_ID) {
+                    if (TextUtils.isEmpty(id)) {
                         throw new IllegalArgumentException();
                     }
                     Service copy = ServiceList.getService(id);
                     if (null == copy) {
                         throw new RuntimeException("Service.install() must be run in every process before getService.");
                     }
-                    if (copy.isImplementProcess()) { // 就是实现在 server 进程
-                        Service serviceCreator = ServiceList.getService(id);
-                        if (serviceCreator != null) {
-                            return serviceCreator.getService();
-                        } else {
-                            if (DEBUG) {
-                                Log.d(TAG, "[getCoreBundle] serviceCreator == null");
-                            }
-                        }
-                        return null;
-                    } else { // 实现在其他进程
-                        String implProcessName = AppUtil.getPackageName() + copy.getProcessSuffix();
-                        IOtherServiceManager manager = ServiceList.getOtherAvailableManager(implProcessName);
-                        if (null != manager) {
-                            if (DEBUG) {
-                                Log.d(TAG, "[getCoreBundle] has found OtherAvailableManager in process " + implProcessName);
-                            }
-                            try {
-                                return manager.getService(id);
-                            } catch (RemoteException e) {
-                            }
-                        }
+                    Service serviceCreator = ServiceList.getService(id);
+                    if (serviceCreator != null) {
+                        return serviceCreator.getService();
+                    } else {
                         if (DEBUG) {
-                            Log.d(TAG, "[getCoreBundle] no OtherAvailableManager found in process " + implProcessName);
+                            Log.d(TAG, "[getCoreBundle] serviceCreator == null");
                         }
-                        return null;
                     }
+                    return null;
                 }
 
                 @Override
                 public void installOtherManager(String processName, IBinder other) throws RemoteException {
                     ServiceList.putOtherManager(processName, other);
+                }
+
+                @Override
+                public IBinder getOtherManager(String processName) throws RemoteException {
+                    IBinder manager = ServiceList.getOtherAvailableManager(processName);
+                    if (null != manager) {
+                        if (DEBUG) {
+                            Log.d(TAG, "[getCoreBundle] has found OtherAvailableManager in process " + processName);
+                        }
+                        return manager;
+                    }
+                    if (DEBUG) {
+                        Log.d(TAG, "[getCoreBundle] no OtherAvailableManager found in process " + processName);
+                    }
+                    return null;
                 }
             };
 

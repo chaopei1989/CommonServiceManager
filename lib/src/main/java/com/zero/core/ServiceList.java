@@ -16,36 +16,31 @@ public class ServiceList {
 
     private static final String TAG = ServiceList.class.getSimpleName();
 
-    static final int MIN_ID = 0;
-
-    static final int MAX_ID = 1024;
-
     /**
-     * 非server进程注册的 ServiceManager
+     * 非 core 进程注册的 ServiceManager
      */
-    private static final HashMap<String, IOtherServiceManager> OTHER_SERVICE_MANAGERS = new HashMap<String, IOtherServiceManager>();
+    private static final HashMap<String, IBinder> OTHER_SERVICE_MANAGERS = new HashMap<String, IBinder>();
 
-    private static final ConcurrentHashMap<Integer, Service> ALL_SERVICES = new ConcurrentHashMap<Integer, Service>();
+    private static final ConcurrentHashMap<String, Service> ALL_SERVICES = new ConcurrentHashMap<String, Service>();
 
     /**
      * 访问的接口cache
      */
-    private static final ConcurrentHashMap<Integer, IBinder> BINDER_CACHE = new ConcurrentHashMap<Integer, IBinder>();
-
+    private static final ConcurrentHashMap<String, IBinder> BINDER_CACHE = new ConcurrentHashMap<String, IBinder>();
 
     static synchronized void putOtherManager(String process, IBinder binder) {
         if (DEBUG) {
             Log.d(TAG, "[putOtherManager] process=" + process);
         }
-        OTHER_SERVICE_MANAGERS.put(process, IOtherServiceManager.Stub.asInterface(binder));
+        OTHER_SERVICE_MANAGERS.put(process, binder);
     }
 
-    static synchronized IOtherServiceManager getOtherAvailableManager(String process) {
+    static synchronized IBinder getOtherAvailableManager(String process) {
         if (DEBUG) {
             Log.d(TAG, "[getOtherAvailableManager] process=" + process);
         }
-        IOtherServiceManager manager = OTHER_SERVICE_MANAGERS.get(process);
-        if (null != manager && manager.asBinder().pingBinder()) {
+        IBinder manager = OTHER_SERVICE_MANAGERS.get(process);
+        if (null != manager && manager.pingBinder()) {
             return manager;
         } else {
             OTHER_SERVICE_MANAGERS.remove(process);
@@ -59,7 +54,7 @@ public class ServiceList {
      * @param id
      * @return
      */
-    static IBinder getCacheBinder(int id) {
+    static IBinder getCacheBinder(String id) {
         return BINDER_CACHE.get(id);
     }
 
@@ -69,35 +64,35 @@ public class ServiceList {
      * @param id
      * @return
      */
-    static void putCacheBinder(int id, IBinder binder) {
+    static void putCacheBinder(String id, IBinder binder) {
         BINDER_CACHE.put(id, binder);
     }
 
-    static void removeCacheBinder(int id) {
+    static void removeCacheBinder(String id) {
         BINDER_CACHE.remove(id);
     }
 
     /**
-     * 【Server进程】获取install的Service
+     * 【core 进程】获取install的Service
      *
      * @param id
      * @return
      */
-    static Service getService(int id) {
+    static Service getService(String id) {
         return ALL_SERVICES.get(id);
     }
 
     /**
-     * 【Server进程】install时调用
+     * 【core 进程】install时调用
      *
      * @param id
      * @param service
      */
-    static void putService(int id, Service service) {
+    static void putService(String id, Service service) {
         ALL_SERVICES.put(id, service);
     }
 
-    static IInterface getInterface(int id, IBinder binder) {
+    static IInterface getInterface(String id, IBinder binder) {
         Service service = ALL_SERVICES.get(id);
         if (service == null) {
             if (DEBUG) {

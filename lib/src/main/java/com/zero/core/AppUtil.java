@@ -21,7 +21,7 @@ public class AppUtil {
 
     private static final int PROCESS_TYPE_UNKNOWN = 0;
 
-    private static final int PROCESS_TYPE_SERVER = 1;
+    private static final int PROCESS_TYPE_CORE = 1;
 
     private static int sProcessType = PROCESS_TYPE_UNKNOWN;
 
@@ -49,21 +49,21 @@ public class AppUtil {
      */
     public static void init(Application app) {
         sInstance = app;
-        if (!runInServerProcess()) {
+        if (!runInCoreProcess()) {
             // todo
         }
     }
 
-    public static boolean runInServerProcess() {
-        return sProcessType == PROCESS_TYPE_SERVER;
+    public static boolean runInCoreProcess() {
+        return sProcessType == PROCESS_TYPE_CORE;
     }
 
-    static void initServerProcess(boolean isServer) {
+    static void initCoreProcess(boolean isCore) {
         if (DEBUG) {
-            Log.d(TAG, "[initServerProcess]：running in process " + getProcessName());
+            Log.d(TAG, "[initCoreProcess]：running in process " + getProcessName());
         }
-        if (isServer) {
-            sProcessType = PROCESS_TYPE_SERVER;
+        if (isCore) {
+            sProcessType = PROCESS_TYPE_CORE;
         }
     }
 

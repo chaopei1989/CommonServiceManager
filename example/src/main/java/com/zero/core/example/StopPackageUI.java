@@ -18,12 +18,12 @@ public class StopPackageUI extends IStopPackage.Stub {
 
     private static final String TAG = StopPackageUI.class.getSimpleName();
 
-    public static final int SERVICE_ID = 1;
+    public static final String SERVICE_ID = "StopPackageUI";
 
     public static final Service INSTALLER = new Service(StopPackageUI.class) {
 
         @Override
-        public int getServiceId() {
+        public String getServiceId() {
             return SERVICE_ID;
         }
 
