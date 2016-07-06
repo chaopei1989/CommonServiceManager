@@ -3,21 +3,54 @@ package com.zero.core;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.text.TextUtils;
+import android.util.Log;
 
-import java.util.IllegalFormatException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 
 public abstract class Service {
 
-    public abstract IInterface asInterface(IBinder binder);
+    private static final boolean DEBUG = AppEnv.DEBUG;
+
+    private static final String TAG = Service.class.getSimpleName();
+
+    private Class<?> mClazz;
+
+    public Service(Class<?> clazz) {
+        mClazz = clazz;
+    }
+
+    private static final HashMap<Class<?>, IBinder> IMPL_MAP = new HashMap<>();
+
+    public final IInterface asInterface(IBinder binder) {
+        try {
+            Method asInterface = mClazz.getMethod("asInterface", IBinder.class);
+            return (IInterface) asInterface.invoke(mClazz, binder);
+        } catch (Exception e) {
+            if (DEBUG) {
+                Log.e(TAG, "[asInterface]", e);
+            }
+        }
+        return null;
+    }
+
+    public final IBinder getService() {
+        ensureInRightProcess();
+        IBinder service = IMPL_MAP.get(mClazz);
+        if (null == service) {
+            try {
+                service = (IBinder) mClazz.newInstance();
+                IMPL_MAP.put(mClazz, service);
+            } catch (Exception e) {
+                if (DEBUG) {
+                    Log.e(TAG, "[asInterface]", e);
+                }
+            }
+        }
+        return service;
+    }
 
     public abstract int getServiceId();
-
-    /**
-     * 【Server进程】
-     * 
-     * @return
-     */
-    public abstract IBinder getService();
 
     /**
      * 返回运行所在进程名的结尾，如果就是运行在server进程则不用覆写(默认返回null)，空字符代表主进程

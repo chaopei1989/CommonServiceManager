@@ -13,7 +13,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        IStopPackageService i = (IStopPackageService) CoreServiceManager.getService(StopPackageService.SERVICE_ID);
+        IStopPackage i = (IStopPackage) CoreServiceManager.getService(StopPackageService.SERVICE_ID);
         try {
             i.killSysNoWait();
         } catch (RemoteException e) {
