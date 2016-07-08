@@ -39,6 +39,12 @@ public class CoreServiceManager {
 
         private IOtherServiceManager.Stub mOtherServiceManagerImpl;
 
+        CoreServiceManagerProxy() {
+            synchronized (this) {
+                refreshServiceManager();
+            }
+        }
+
         private synchronized ICoreServiceManager getCoreServiceManagerImpl() {
             if (null == mBase) {
                 refreshServiceManager();
