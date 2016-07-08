@@ -21,15 +21,14 @@ public class CoreServiceManager {
             + CoreProvider.AUTHORITY + "/"
             + CoreProvider.PATH_SERVICE_PROVIDER);
 
-    /**
-     * 进程单例，没有其他地方赋值了
-     */
-    private static CoreServiceManagerProxy sCoreServiceManagerProxy = new CoreServiceManagerProxy();
+    private static CoreServiceManagerProxy sCoreServiceManagerProxy;
 
     static void init() {
-        sCoreServiceManagerProxy = new CoreServiceManagerProxy();
-        synchronized(sCoreServiceManagerProxy) {
-            sCoreServiceManagerProxy.refreshBase();
+        /**
+         * 进程单例，没有其他地方赋值了
+         */
+        if(null != sCoreServiceManagerProxy) {
+            sCoreServiceManagerProxy = new CoreServiceManagerProxy();
         }
     }
 
@@ -39,6 +38,12 @@ public class CoreServiceManager {
         private ICoreServiceManager mBase;
 
         private IOtherServiceManager.Stub mOtherServiceManagerImpl;
+
+        CoreServiceManagerProxy() {
+            synchronized (this) {
+                refreshBase();
+            }
+        }
 
         private synchronized ICoreServiceManager getCoreServiceManagerImpl() {
             if (null == mBase) {
