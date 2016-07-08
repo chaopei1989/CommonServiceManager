@@ -21,6 +21,8 @@ public class CoreProvider extends ContentProvider {
 
     static final String PATH_SERVICE_PROVIDER = "serviceprovide";
 
+    static final String KEY_SERVICE_MANAGER = PATH_SERVICE_PROVIDER;
+
     private static final int CODE_SERVICE_PROVIDER = 0;
 
     @Override
@@ -165,7 +167,7 @@ public class CoreProvider extends ContentProvider {
 
             mCoreBundle = new Bundle();
 
-            mCoreBundle.putParcelable(CoreServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(coreServiceManagerImpl));
+            mCoreBundle.putParcelable(CoreProvider.KEY_SERVICE_MANAGER, new ServiceParcel(coreServiceManagerImpl));
         }
         return mCoreBundle;
     }

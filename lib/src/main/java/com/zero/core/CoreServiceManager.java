@@ -17,20 +17,21 @@ public class CoreServiceManager {
 
     private static final String TAG = CoreServiceManager.class.getSimpleName();
 
-    private static final Uri SERVICE_MANAGER_URI;
-
-    static final String SERVICE_MANAGER_KEY = CoreProvider.PATH_SERVICE_PROVIDER;
-
-    static {
-        SERVICE_MANAGER_URI = Uri.parse("content://"
-                + CoreProvider.AUTHORITY + "/"
-                + CoreProvider.PATH_SERVICE_PROVIDER);
-    }
+    private static final Uri SERVICE_MANAGER_URI = Uri.parse("content://"
+            + CoreProvider.AUTHORITY + "/"
+            + CoreProvider.PATH_SERVICE_PROVIDER);
 
     /**
      * 进程单例，没有其他地方赋值了
      */
-    private static final CoreServiceManagerProxy CORE_SERVICE_MANAGER_PROXY = new CoreServiceManagerProxy();
+    private static CoreServiceManagerProxy sCoreServiceManagerProxy = new CoreServiceManagerProxy();
+
+    static void init() {
+        sCoreServiceManagerProxy = new CoreServiceManagerProxy();
+        synchronized(sCoreServiceManagerProxy) {
+            sCoreServiceManagerProxy.refreshBase();
+        }
+    }
 
     private static class CoreServiceManagerProxy implements
             ICoreServiceManager, IBinder.DeathRecipient {
@@ -39,22 +40,16 @@ public class CoreServiceManager {
 
         private IOtherServiceManager.Stub mOtherServiceManagerImpl;
 
-        CoreServiceManagerProxy() {
-            synchronized (this) {
-                refreshServiceManager();
-            }
-        }
-
         private synchronized ICoreServiceManager getCoreServiceManagerImpl() {
             if (null == mBase) {
-                refreshServiceManager();
+                refreshBase();
             }
             return mBase;
         }
 
-        private void refreshServiceManager() {
+        private void refreshBase() {
             if (DEBUG) {
-                Log.d(TAG, "[refreshServiceManager]");
+                Log.d(TAG, "[refreshBase]");
             }
             mBase = fetchLocked();
             if (null != mBase) {
@@ -65,7 +60,7 @@ public class CoreServiceManager {
                     }
                 } catch (RemoteException e) {
                     if (DEBUG) {
-                        Log.e(TAG, "[refreshServiceManager]：RemoteException", e);
+                        Log.e(TAG, "[refreshBase]：RemoteException", e);
                     }
                 }
             }
@@ -76,14 +71,14 @@ public class CoreServiceManager {
          *
          * @return
          */
-        private synchronized ICoreServiceManager fetchLocked() {
+        private ICoreServiceManager fetchLocked() {
             ICoreServiceManager service = null;
 
             try {
                 Bundle bundle = AppUtil.getApplication().getContentResolver().call(SERVICE_MANAGER_URI, CoreProvider.PATH_SERVICE_PROVIDER, null, null);
                 if (null != bundle) {
                     bundle.setClassLoader(ServiceParcel.class.getClassLoader());
-                    ServiceParcel serviceParcel = bundle.getParcelable(SERVICE_MANAGER_KEY);
+                    ServiceParcel serviceParcel = bundle.getParcelable(CoreProvider.KEY_SERVICE_MANAGER);
                     if (null != serviceParcel) {
                         IBinder binder = serviceParcel.getBinder();
                         service = ICoreServiceManager.Stub.asInterface(binder);
@@ -146,7 +141,7 @@ public class CoreServiceManager {
             if (DEBUG) {
                 Log.d(TAG, "[binderDied] service channel died, retried.");
             }
-            refreshServiceManager();
+            refreshBase();
         }
 
         private IOtherServiceManager.Stub getOtherServiceManagerImpl() {
@@ -221,7 +216,7 @@ public class CoreServiceManager {
             if (remote != null) {
                 return remote;
             }
-            remote = CORE_SERVICE_MANAGER_PROXY.getCoreService(mServiceId);
+            remote = sCoreServiceManagerProxy.getCoreService(mServiceId);
             if (remote == null) {
                 throw new RemoteException();
             }
@@ -350,7 +345,7 @@ public class CoreServiceManager {
                     if (DEBUG) {
                         Log.d(TAG, "[getService]：core impl");
                     }
-                    binder = CORE_SERVICE_MANAGER_PROXY.getCoreService(id);
+                    binder = sCoreServiceManagerProxy.getCoreService(id);
                 }
                 if (null != binder) {
                     ServiceList.putCacheBinder(id, RemoteBinderProxy.createInterface(id, binder));
@@ -384,7 +379,7 @@ public class CoreServiceManager {
                 Log.d(TAG, "[getOtherServiceManger]：binder has no cache");
             }
             try {
-                binder = CORE_SERVICE_MANAGER_PROXY.getOtherManager(processName);
+                binder = sCoreServiceManagerProxy.getOtherManager(processName);
                 if (null != binder) {
                     ServiceList.putCacheBinder(processName, RemoteBinderProxy.createInterface(processName, binder));
                 }

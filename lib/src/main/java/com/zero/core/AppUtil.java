@@ -50,7 +50,7 @@ public class AppUtil {
     public static void init(Application app) {
         sInstance = app;
         if (!runInCoreProcess()) {
-            // todo
+            CoreServiceManager.init();
         }
     }
 
