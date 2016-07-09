@@ -49,9 +49,7 @@ public class AppUtil {
      */
     public static void init(Application app) {
         sInstance = app;
-        if (!runInCoreProcess()) {
-            CoreServiceManager.init();
-        }
+        CoreServiceManager.init();
     }
 
     public static boolean runInCoreProcess() {
