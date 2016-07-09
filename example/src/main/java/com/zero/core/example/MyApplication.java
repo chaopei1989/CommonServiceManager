@@ -1,6 +1,7 @@
 package com.zero.core.example;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
 import com.zero.core.AppEnv;
@@ -24,8 +25,8 @@ public class MyApplication extends Application {
     }
 
     @Override
-    public void onCreate() {
-        super.onCreate();
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
         AppUtil.init(this); // needed!
     }
 
