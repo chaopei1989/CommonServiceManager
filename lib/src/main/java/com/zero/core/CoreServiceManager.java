@@ -1,6 +1,10 @@
 package com.zero.core;
 
+import android.content.ContentProviderClient;
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.IInterface;
@@ -27,7 +31,7 @@ public class CoreServiceManager {
         /**
          * 进程单例，没有其他地方赋值了
          */
-        if(null != sCoreServiceManagerProxy) {
+        if (null == sCoreServiceManagerProxy) {
             sCoreServiceManagerProxy = new CoreServiceManagerProxy();
         }
     }
@@ -80,7 +84,7 @@ public class CoreServiceManager {
             ICoreServiceManager service = null;
 
             try {
-                Bundle bundle = AppUtil.getApplication().getContentResolver().call(SERVICE_MANAGER_URI, CoreProvider.PATH_SERVICE_PROVIDER, null, null);
+                Bundle bundle = queryProvider(AppUtil.getApplication().getContentResolver(), SERVICE_MANAGER_URI, CoreProvider.PATH_SERVICE_PROVIDER, null, null);
                 if (null != bundle) {
                     bundle.setClassLoader(ServiceParcel.class.getClassLoader());
                     ServiceParcel serviceParcel = bundle.getParcelable(CoreProvider.KEY_SERVICE_MANAGER);
@@ -95,6 +99,41 @@ public class CoreServiceManager {
                 }
             }
             return service;
+        }
+
+        /**
+         * ContentResolver.call() 方法拿的是 stable 的 IContentProvider，如果用于跨 app 场景，本 app 若被 forceStop 会导致依赖此 app 的应用一并被杀。<br/><br/>
+         * <b>SDK_INT&gt;=4.2</b>，可以使用 ContentResolver.acquireUnstableContentProviderClient() 获取 unstable 的IContentProvider，并使用其 call 方法（实际上 4.1 也可以使用 acquireUnstableContentProviderClient 方法，但是拿到的 ContentProviderClient 是没有 call 方法的）。<br/><br/>
+         * <b>SDK_INT&lt;4.2</b>，还是使用 ContentResolver.query() 方法。
+         * @throws RemoteException
+         */
+        private Bundle queryProvider(ContentResolver resolver, Uri uri, String method, String arg, Bundle extras) throws RemoteException {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                ContentProviderClient provider = resolver.acquireUnstableContentProviderClient(uri);
+                if (null != provider) {
+                    return provider.call(method, arg, extras);
+                }
+            } else {
+                Cursor cursor = null;
+                try {
+                    cursor = resolver.query(SERVICE_MANAGER_URI, null, null, null, null);
+                    if (null != cursor) {
+                        return cursor.getExtras();
+                    }
+                } catch (Exception e) {
+                    if (DEBUG) {
+                        Log.e(TAG, "", e);
+                    }
+                } finally {
+                    if (cursor != null) {
+                        try {
+                            cursor.close();
+                        } catch (Exception e) {
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         @Override

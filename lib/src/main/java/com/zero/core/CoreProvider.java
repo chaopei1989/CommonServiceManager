@@ -4,6 +4,7 @@ import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -35,7 +36,9 @@ public class CoreProvider extends ContentProvider {
 
     private Bundle mCoreBundle;
 
-//    private static MatrixCursor sCursor;
+    private ICoreServiceManager.Stub mCoreImpl;
+
+    private MatrixCursor mCursor;
 
     static {
         if (DEBUG) {
@@ -44,19 +47,6 @@ public class CoreProvider extends ContentProvider {
         URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
         URI_MATCHER.addURI(AUTHORITY, PATH_SERVICE_PROVIDER, CODE_SERVICE_PROVIDER);
-
-//        /**
-//         * 返回给客户端的MatrixCursor
-//         */
-//        sCursor = new MatrixCursor(new String[] { "s" }) {
-//
-//            @Override
-//            public Bundle getExtras() {
-//                Bundle extra = new Bundle();
-//                extra.putParcelable(CoreServiceManager.SERVICE_MANAGER_KEY, new ServiceParcel(sCoreServiceManagerImpl));
-//                return extra;
-//            }
-//        };
     }
 
     @Override
@@ -75,17 +65,17 @@ public class CoreProvider extends ContentProvider {
     @Override
     public Cursor query(Uri uri, String[] projection, String selection,
                         String[] selectionArgs, String sortOrder) {
-//		if (DEBUG) {
-//            Log.d(TAG, "[query]：uri = " + (uri == null ? "null" : uri.toString()));
-//        }
-//        final int matchCode = URI_MATCHER.match(uri);
-//
-//        if (matchCode == CODE_SERVICE_PROVIDER) {
-//        if (DEBUG) {
-//                Log.d(TAG, "[query]：CODE_SERVICE_PROVIDER");
-//            }
-//            return sCursor;
-//        }
+		if (DEBUG) {
+            Log.d(TAG, "[query]：uri = " + (uri == null ? "null" : uri.toString()));
+        }
+        final int matchCode = URI_MATCHER.match(uri);
+
+        if (matchCode == CODE_SERVICE_PROVIDER) {
+        if (DEBUG) {
+                Log.d(TAG, "[query]：CODE_SERVICE_PROVIDER");
+            }
+            return getCoreCursor();
+        }
         return null;
     }
 
@@ -110,9 +100,9 @@ public class CoreProvider extends ContentProvider {
         return 0;
     }
 
-    private Bundle getCoreBundle() {
-        if (null == mCoreBundle) {
-            ICoreServiceManager.Stub coreServiceManagerImpl = new ICoreServiceManager.Stub() {
+    private ICoreServiceManager.Stub getCoreImpl() {
+        if (null == mCoreImpl) {
+            mCoreImpl = new ICoreServiceManager.Stub() {
 
                 @Override
                 public IBinder getCoreService(String id) throws RemoteException {
@@ -164,11 +154,33 @@ public class CoreProvider extends ContentProvider {
                     return null;
                 }
             };
+        }
+        return mCoreImpl;
+    }
+
+    private Bundle getCoreBundle() {
+        if (null == mCoreBundle) {
+            ICoreServiceManager.Stub coreImpl = getCoreImpl();
 
             mCoreBundle = new Bundle();
 
-            mCoreBundle.putParcelable(CoreProvider.KEY_SERVICE_MANAGER, new ServiceParcel(coreServiceManagerImpl));
+            mCoreBundle.putParcelable(CoreProvider.KEY_SERVICE_MANAGER, new ServiceParcel(coreImpl));
         }
         return mCoreBundle;
+    }
+
+    private Cursor getCoreCursor() {
+        if (null == mCursor) {
+            /**
+             * 返回给客户端的MatrixCursor
+             */
+            mCursor = new MatrixCursor(new String[] { "s" }) {
+                @Override
+                public Bundle getExtras() {
+                    return getCoreBundle();
+                }
+            };
+        }
+        return mCursor;
     }
 }
