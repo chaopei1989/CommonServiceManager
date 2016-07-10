@@ -15,6 +15,9 @@ import android.util.Log;
 
 import java.io.FileDescriptor;
 
+/**
+ * core class for user.
+ */
 public class CoreServiceManager {
 
     private static final boolean DEBUG = AppEnv.DEBUG;

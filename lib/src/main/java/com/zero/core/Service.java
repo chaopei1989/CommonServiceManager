@@ -8,6 +8,9 @@ import android.util.Log;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
+/**
+ * Implement this abstract class to create your own service.
+ */
 public abstract class Service {
 
     private static final boolean DEBUG = AppEnv.DEBUG;

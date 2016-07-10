@@ -12,6 +12,9 @@ import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.Log;
 
+/**
+ * Core provider for binder transact.
+ */
 public class CoreProvider extends ContentProvider {
 
     private static final boolean DEBUG = AppEnv.DEBUG;

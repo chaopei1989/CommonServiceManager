@@ -9,6 +9,7 @@ import com.zero.core.AppUtil;
 
 /**
  * Created by chaopei on 2016/7/2.
+ * Application
  */
 public class MyApplication extends Application {
 

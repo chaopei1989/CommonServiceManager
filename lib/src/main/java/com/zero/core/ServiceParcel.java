@@ -4,6 +4,9 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+/**
+ * A parcelable object contains a binder.
+ */
 public class ServiceParcel implements Parcelable {
 
     private final IBinder mBinder;
