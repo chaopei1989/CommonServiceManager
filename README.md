@@ -216,7 +216,7 @@ public class MainActivity extends Activity {
 ![commonserviceManager.png][2]
 
 另外 CommonserviceManager 还有服务可扩展、进程可扩展的特性。
-# 实现原理
+# 核心结构
 
 ![CommonServiceManager_process.png][3]
 
