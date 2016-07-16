@@ -215,7 +215,10 @@ public class MainActivity extends Activity {
 
 ![commonserviceManager.png][2]
 
-另外 CommonserviceManager 还有服务可扩展、进程可扩展的特性。
+另外 CommonserviceManager 还有服务可扩展、进程可扩展的特性，只要和 example 中一样在 AIDL 服务实现类中声明一个 INSTALLER，指定运行进程的后缀即可。
+
+不过除了 core 进程外，其他进程若未启动，在该进程中服务调用是失败的，因为没有任何进程拉起的组件。
+
 # 核心结构
 
 ![CommonServiceManager_process.png][3]
