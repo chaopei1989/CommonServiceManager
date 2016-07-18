@@ -223,6 +223,7 @@ public class MainActivity extends Activity {
 
 ![CommonServiceManager_process.png][3]
 
+其中 provider 实为所有通信的核心。
 
   [1]: https://github.com/lollipopgood/CommonServiceManager
   [2]: http://www.3dobe.com/usr/uploads/2016/07/7646042.png
